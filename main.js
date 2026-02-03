@@ -35,13 +35,14 @@ import { netskopeAdapter } from './playwright/netskope.js';
 import { openaiAdapter } from './playwright/openai.js';
 import { snykAdapter } from './playwright/snyk.js';
 import { supabaseAdapter } from './playwright/supabase.js';
+import { resendAdapter } from './playwright/resend.js';
 
 const agent = new https.Agent({
   rejectUnauthorized: false
 });
 
 // Auto mode: if true, skips confirmation prompts
-const AUTO_MODE = true;
+const AUTO_MODE = false;
 
 if (!process.env.NODE_EXTRA_CA_CERTS) {
   throw new Error('Missing trusted CA configuration');
@@ -60,7 +61,7 @@ const FETCHERS = {
   netskope: netskopeUsers,
   openai: openaiUsers,
   snyk: snykUsers,
-  supabase: supabaseUsers
+  supabase: supabaseUsers,
 };
 
 /* ============================
@@ -208,7 +209,7 @@ for (const app of Object.keys(App)) {
   }
 
   if (cfg.evidenceOnly) {
-    const adapterMap = { caniphish: caniphishAdapter, csat: csatAdapter, jumpcloud: jumpcloudAdapter };
+    const adapterMap = { caniphish: caniphishAdapter, csat: csatAdapter, jumpcloud: jumpcloudAdapter, resend: resendAdapter };
     const screenshots = await captureUserListEvidence(app, adapterMap[app]);
     await updateJiraTicket(friendlyName, [], [], screenshots); 
     continue;
