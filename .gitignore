@@ -1,0 +1,10 @@
+node_modules/
+package-lock.json
+.env
+playwright/profiles/
+evidence/
+.oci-profile/
+*.csv
+test.js
+rootcaCert.pem
+.github/
