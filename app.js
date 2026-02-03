@@ -1,4 +1,8 @@
 export default {
+  resend: {
+    keywords: ["resend"],
+    evidenceOnly: true
+  },
   supabase: {
     keywords: ["supabase"]
   },
