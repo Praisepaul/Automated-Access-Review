@@ -15,9 +15,6 @@ export default {
   censys: {
     keywords: ["censys"],
   },
-  framer: {
-    keywords: ["framer"],
-  },
   adopt: {
     keywords: ["adopt"],
   },

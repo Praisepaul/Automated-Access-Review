@@ -42,6 +42,28 @@ export const jumpcloudAdapter = {
         // Use the hash route directly
         await page.goto('https://console.jumpcloud.com/#/settings/administrators');
         
+        // --- NEW: Handle Tour Guide Tooltip ---
+        console.log("[JUMPCLOUD] Checking for Tour Guide tooltips...");
+        try {
+            // Target the button specifically by its Tour Guide attributes
+            const closeButton = page.locator('button[data-tour-guide-interactive="true"]').first();
+            
+            // Wait up to 5 seconds for it to appear
+            if (await closeButton.isVisible({ timeout: 5000 })) {
+                console.log("[JUMPCLOUD] Tour Guide detected. Attempting to close...");
+                
+                // Using .click({ force: true }) because these modals sometimes 
+                // have invisible overlays that block traditional clicks
+                await closeButton.click({ force: true });
+                
+                // Wait for the modal fade-out animation
+                await page.waitForTimeout(1000);
+                console.log(" Tour Guide closed.");
+            }
+        } catch (e) {
+            console.log("[JUMPCLOUD] No Tour Guide appeared, proceeding...");
+        }
+
         // Wait for the specific list container you provided
         await page.waitForSelector(this.selector, { timeout: 30000 });
 
