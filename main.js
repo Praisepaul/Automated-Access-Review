@@ -17,10 +17,12 @@ import netskopeUsers from "./netskope.js";
 import openaiUsers from "./openai.js";
 import snykUsers from './snyk.js';
 import supabaseUsers from './supabase..js';
+import jiraUsers from "./jira.js";
+import confluenceUsers from './confluence.js';
 
 import writeCSV from "./report.js";
 import { diffSets } from "./diff.js";
-import { updateJiraTicket, createAccessTicket, getJiraTicketStatus } from './jira.js';
+import { updateJiraTicket, createAccessTicket, getJiraTicketStatus } from './jira_ticket.js';
 
 import { captureUserListEvidence } from "./playwright/index.js";
 import { ociAdapter } from './playwright/oci.js';
@@ -62,6 +64,8 @@ const FETCHERS = {
   openai: openaiUsers,
   snyk: snykUsers,
   supabase: supabaseUsers,
+  jira: jiraUsers,
+  confluence: confluenceUsers,
 };
 
 /* ============================

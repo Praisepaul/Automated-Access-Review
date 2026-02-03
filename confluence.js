@@ -3,9 +3,9 @@ import axios from "axios";
 dotenv.config({ override: true });
 
 /**
- * Fetch Jira users belonging to the specific Admin group via Atlassian REST API v3
+ * Fetch Confluence users belonging to the specific Admin group via Atlassian REST API v3
  */
-export default async function jiraUsers(debug = false) {
+export default async function confluenceUsers(debug = false) {
     const domain = process.env.JIRA_TEAM_NAME;
     const groupId = process.env.JIRA_ADMIN_GROUP_ID; // Your confirmed Admin Group ID
     const users = new Set();
@@ -20,7 +20,7 @@ export default async function jiraUsers(debug = false) {
     let isLast = false;
 
     try {
-        console.log("[JIRA API] Fetching group members...");
+        console.log("[CONFLUENCE API] Fetching group members...");
 
         while (!isLast) {
             const response = await axios.get(
@@ -47,7 +47,7 @@ export default async function jiraUsers(debug = false) {
                 const email = user.emailAddress?.toLowerCase().trim();
 
                 if (debug) {
-                    console.log(`[DEBUG] Processing Jira User: ${user.displayName} (${email})`);
+                    console.log(`[DEBUG] Processing Confluence User: ${user.displayName} (${email})`);
                 }
 
                 // Only add users from your organization's domain
@@ -64,11 +64,11 @@ export default async function jiraUsers(debug = false) {
             }
         }
 
-        console.log(`[JIRA API] Done. Found ${users.size} active administrators.`);
+        console.log(`[CONFLUENCE API] Done. Found ${users.size} active administrators.`);
         return users;
 
     } catch (err) {
-        console.error("[JIRA API] Error:", err.response?.data?.errorMessages || err.message);
+        console.error("[CONFLUENCE API] Error:", err.response?.data?.errorMessages || err.message);
         return new Set();
     }
 }

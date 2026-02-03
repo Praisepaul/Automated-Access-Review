@@ -1,4 +1,10 @@
 export default {
+  jira:{
+    keywords: ["jira admin"]
+  },
+  confluence: {
+    keywords: ["confluence admin"]
+  },
   resend: {
     keywords: ["resend"],
     evidenceOnly: true
