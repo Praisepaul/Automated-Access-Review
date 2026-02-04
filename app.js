@@ -1,4 +1,15 @@
+import { google } from "googleapis";
+
 export default {
+  googleWorkspace: {
+    keywords: ["google workspace admin"]
+  },
+  chatgpt: {
+    keywords: ["chatgpt"]
+  },
+  kubernetes: {
+    keywords: ["kubernetes"]
+  },
   jira:{
     keywords: ["jira admin"]
   },
