@@ -17,10 +17,15 @@ import netskopeUsers from "./netskope.js";
 import openaiUsers from "./openai.js";
 import snykUsers from './snyk.js';
 import supabaseUsers from './supabase..js';
+import jiraUsers from "./jira.js";
+import confluenceUsers from './confluence.js';
+import getOciKubernetesUsers from './kubernetes.js';
+import chatgptUsers from './chatgpt.js';
+import googleAdmins from './googleWorkspace.js';
 
 import writeCSV from "./report.js";
 import { diffSets } from "./diff.js";
-import { updateJiraTicket, createAccessTicket, getJiraTicketStatus } from './jira.js';
+import { updateJiraTicket, createAccessTicket, getJiraTicketStatus } from './jira_ticket.js';
 
 import { captureUserListEvidence } from "./playwright/index.js";
 import { ociAdapter } from './playwright/oci.js';
@@ -28,7 +33,7 @@ import { slackAdapter } from "./playwright/slack.js";
 import { crowdstrikeAdapter } from "./playwright/crowdstrike.js";
 import { caniphishAdapter } from "./playwright/caniphish.js";
 import { csatAdapter } from "./playwright/csat.js";
-import { cloudflareAdapter } from "./playwright/cloudflare.js";
+//import { cloudflareAdapter } from "./playwright/cloudflare.js";
 import { jumpcloudAdapter } from './playwright/jumpcloud.js';
 import { githubAdapter } from './playwright/github.js';
 import { netskopeAdapter } from './playwright/netskope.js';
@@ -36,6 +41,7 @@ import { openaiAdapter } from './playwright/openai.js';
 import { snykAdapter } from './playwright/snyk.js';
 import { supabaseAdapter } from './playwright/supabase.js';
 import { resendAdapter } from './playwright/resend.js';
+import { google } from 'googleapis';
 
 const agent = new https.Agent({
   rejectUnauthorized: false
@@ -62,6 +68,11 @@ const FETCHERS = {
   openai: openaiUsers,
   snyk: snykUsers,
   supabase: supabaseUsers,
+  jira: jiraUsers,
+  confluence: confluenceUsers,
+  kubernetes: getOciKubernetesUsers,
+  chatgpt: chatgptUsers,
+  googleWorkspace: googleAdmins,
 };
 
 /* ============================
@@ -72,9 +83,6 @@ console.log("[INIT] Fetching JumpCloud groups...");
 const ALL_JC_GROUPS = await listGroups();
 console.log(`[INIT] Loaded ${ALL_JC_GROUPS.length} groups`);
 
-/* ============================
-   MAIN LOOP
-============================ */
 
 /* ============================
    MAIN LOOP
@@ -230,7 +238,7 @@ for (const app of Object.keys(App)) {
   }
 
   // Capture Screenshots
-  const adapters = { slack: slackAdapter, crowdstrike: crowdstrikeAdapter, cloudflare: cloudflareAdapter, github: githubAdapter, netskope: netskopeAdapter, snyk: snykAdapter, supabase: supabaseAdapter };
+  const adapters = { slack: slackAdapter, crowdstrike: crowdstrikeAdapter, github: githubAdapter, netskope: netskopeAdapter, snyk: snykAdapter, supabase: supabaseAdapter };
   if (adapters[app]) {
     const screenshots = await captureUserListEvidence(app, adapters[app]);
     if (screenshots) evidenceFiles.push(...screenshots);
