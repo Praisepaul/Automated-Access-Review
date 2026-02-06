@@ -1,6 +1,15 @@
 import { google } from "googleapis";
 
 export default {
+  cursor: {
+    keywords: ["cursor"],
+  },
+  mongodb: {
+    keywords: ["atlas mongodb"]
+  },
+  vexpense: {
+    keywords: ["vexpenses group offline"]
+  },
   googleWorkspace: {
     keywords: ["google workspace admin"]
   },

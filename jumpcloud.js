@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// Constants for base URLs
 const BASE_V1 = "https://console.jumpcloud.com/api";
 const BASE_V2 = "https://console.jumpcloud.com/api/v2";
 const USER_CACHE = new Map();
@@ -13,41 +12,37 @@ const HEADERS = {
 };
 
 /**
- * Fetches all groups using pagination.
+ * Helper to check if a JumpCloud user is active.
  */
+function isUserActive(user) {
+    // activated must be true AND suspended must be false
+    return user.activated === true && user.suspended === false;
+}
+
 export async function listGroups() {
   const allGroups = [];
   const limit = 100;
   let skip = 0;
 
   while (true) {
-    // Headers must be passed here to avoid 401 errors
     const r = await axios.get(`${BASE_V2}/usergroups`, {
       headers: HEADERS,
       params: { limit, skip }
     });
 
     if (!Array.isArray(r.data) || r.data.length === 0) break;
-
     allGroups.push(...r.data);
     skip += r.data.length;
-
-    // Stop if we received fewer results than the limit (end of list)
     if (r.data.length < limit) break;
   }
-
   return allGroups;
 }
 
-/**
- * Fetches members and resolves their IDs to email addresses.
- */
 export async function groupMembers(groupId, debug = false) {
   const userIds = [];
   let skip = 0;
   const limit = 100;
 
-  // 1. Get Member IDs using the v2 associations endpoint
   while (true) {
     const r = await axios.get(`${BASE_V2}/usergroups/${groupId}/members`, {
       headers: HEADERS,
@@ -59,24 +54,20 @@ export async function groupMembers(groupId, debug = false) {
     r.data.forEach(m => {
       const t = m.to?.type;
       const id = m.to?.id;
-
       if ((t === "user" || t === "systemuser") && id) {
         userIds.push(id);
       }
     });
-
 
     skip += r.data.length;
     if (r.data.length < limit) break;
   }
 
   if (debug) console.log(`[JUMPCLOUD] Found ${userIds.length} IDs for group ${groupId}`);
-  if (!userIds.length) return new Set();
+  if (!userIds.length) return [];
 
-  // 2. Resolve IDs → Emails using direct user lookup (always supported)
-  const members = []; // Change from Set to Array of Objects
+  const members = [];
 
-  // 2. Resolve IDs → Details
   for (const id of userIds) {
     try {
       let u;
@@ -86,6 +77,12 @@ export async function groupMembers(groupId, debug = false) {
         const r = await axios.get(`${BASE_V1}/systemusers/${id}`, { headers: HEADERS });
         u = r.data;
         USER_CACHE.set(id, u);
+      }
+
+      // --- STATUS FILTER ADDED HERE ---
+      if (!isUserActive(u)) {
+          if (debug) console.log(`[JUMPCLOUD] Skipping suspended/inactive user: ${u.email}`);
+          continue; 
       }
 
       const email = (u.email || u.username || "").toLowerCase().trim();
@@ -99,11 +96,10 @@ export async function groupMembers(groupId, debug = false) {
     }
   }
 
-  return members; // Returns [{email, name}, ...]
+  return members;
 }
 
 export async function getJumpCloudUserName(input) {
-    // 1. Normalize input
     let email;
     let fallbackName;
 
@@ -120,10 +116,12 @@ export async function getJumpCloudUserName(input) {
 
     const searchEmail = email.toLowerCase().trim();
 
-    // 2. Cache lookup
     for (const user of USER_CACHE.values()) {
         const cachedEmail = (user.email || user.username || "").toLowerCase().trim();
         if (cachedEmail === searchEmail) {
+            // Check status even in cache
+            if (!isUserActive(user)) continue;
+
             const name =
                 `${user.firstname || ""} ${user.lastname || ""}`.trim() ||
                 fallbackName ||
@@ -133,7 +131,6 @@ export async function getJumpCloudUserName(input) {
         }
     }
 
-    // 3. API fallback
     try {
         const response = await axios.get(`${BASE_V1}/systemusers`, {
             headers: HEADERS,
@@ -142,7 +139,8 @@ export async function getJumpCloudUserName(input) {
 
         const user = response.data.results?.[0];
 
-        if (user) {
+        // --- STATUS FILTER ADDED HERE ---
+        if (user && isUserActive(user)) {
             USER_CACHE.set(user.id || searchEmail, user);
             const name =
                 `${user.firstname || ""} ${user.lastname || ""}`.trim() ||
@@ -152,9 +150,7 @@ export async function getJumpCloudUserName(input) {
             return { name, email: searchEmail };
         }
     } catch (err) {
-        console.error(
-            `[JUMPCLOUD] Global search failed for ${searchEmail}: ${err.message}`
-        );
+        console.error(`[JUMPCLOUD] Global search failed for ${searchEmail}: ${err.message}`);
     }
 
     return {
@@ -162,4 +158,3 @@ export async function getJumpCloudUserName(input) {
         email: searchEmail
     };
 }
-

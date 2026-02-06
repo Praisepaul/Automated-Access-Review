@@ -22,6 +22,8 @@ import confluenceUsers from './confluence.js';
 import getOciKubernetesUsers from './kubernetes.js';
 import chatgptUsers from './chatgpt.js';
 import googleAdmins from './googleWorkspace.js';
+import vexpensesUsers from './vexpense.js';
+import cursor from './cursor.js';
 
 import writeCSV from "./report.js";
 import { diffSets } from "./diff.js";
@@ -42,6 +44,7 @@ import { snykAdapter } from './playwright/snyk.js';
 import { supabaseAdapter } from './playwright/supabase.js';
 import { resendAdapter } from './playwright/resend.js';
 import { google } from 'googleapis';
+import cursorUsers from './cursor.js';
 
 const agent = new https.Agent({
   rejectUnauthorized: false
@@ -73,6 +76,8 @@ const FETCHERS = {
   kubernetes: getOciKubernetesUsers,
   chatgpt: chatgptUsers,
   googleWorkspace: googleAdmins,
+  vexpense: vexpensesUsers,
+  cursor: cursorUsers
 };
 
 /* ============================
