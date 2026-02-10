@@ -1,6 +1,16 @@
 import { google } from "googleapis";
 
 export default {
+  lucid: {
+    keywords: ["lucidchart"],
+  },
+  figma: {
+    keywords: ["figma"],
+    evidenceOnly: true
+  },
+  convenia: {
+    keywords: ["convenia"],
+  },
   cursor: {
     keywords: ["cursor"],
   },
