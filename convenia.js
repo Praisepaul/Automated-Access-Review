@@ -8,48 +8,61 @@ export default async function conveniaUsers() {
     const BASE_URL = "https://public-api.convenia.com.br/api/v3/employees";
 
     if (!TOKEN) {
-        console.warn("[CONVENIA API] Missing CONVENIA_TOKEN in environment");
+        console.warn("[CONVENIA API] Missing CONVENIA_TOKEN");
         return users;
     }
 
     try {
         let currentPage = 1;
-        let lastPage = 1;
+        let hasMore = true;
 
-        console.log("[CONVENIA API] Fetching active employees...");
+        console.log("[CONVENIA API] Fetching all employees...");
 
-        do {
+        while (hasMore) {
             const response = await axios.get(BASE_URL, {
                 headers: {
                     'token': TOKEN,
                     'Accept': 'application/json'
                 },
                 params: {
-                    paginate: 100, // Quantidade por página
-                    page: currentPage
+                    page: currentPage,
+                    limit: 100 // Fetching maximum allowed per page for efficiency
                 }
             });
 
             const employees = response.data.data || [];
-            
-            for (const emp of employees) {
-                // Filtramos apenas quem tem status 'Ativo'
-                if (emp.status !== "Ativo") continue;
 
-                let email = emp.email?.toLowerCase().trim();
-            if (!email || email.startsWith("sys")) continue;
+            if (employees.length === 0) {
+                hasMore = false;
+                break;
+            }
+
+            for (const emp of employees) {
+                // Convenia usually provides corporate email in 'email' 
+                // or personal in 'personal_email'. We prioritize work email.
+                let email = (emp.email || emp.personal_email || "").toLowerCase().trim();
+
+                // Status check: Only include active employees (usually status 1 or 'active')
+                // Adjust this if your debug data showed a different status field
+                if (!email || email.startsWith("sys")) continue;
+                
+                // Exclude dismissed employees if the field exists
+                if (emp.dismissal_date) continue;
 
                 users.add(email);
             }
 
-            // Atualiza informações de paginação
-            currentPage = response.data.current_page + 1;
-            lastPage = response.data.last_page;
+            console.log(`[CONVENIA API] Processed page ${currentPage} (Found ${employees.length} entries)`);
+            
+            // Pagination Check: If we received fewer items than the limit, it's the last page
+            if (employees.length < 100) {
+                hasMore = false;
+            } else {
+                currentPage++;
+            }
+        }
 
-        } while (currentPage <= lastPage);
-
-        console.log(`[CONVENIA API] Done. Found ${users.size} active employees.`);
-        console.log(users);
+        console.log(`[CONVENIA API] Done. Found ${users.size} unique active employees.`);
         return users;
 
     } catch (err) {

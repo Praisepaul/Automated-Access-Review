@@ -23,7 +23,9 @@ import getOciKubernetesUsers from './kubernetes.js';
 import chatgptUsers from './chatgpt.js';
 import googleAdmins from './googleWorkspace.js';
 import vexpensesUsers from './vexpense.js';
-import cursor from './cursor.js';
+import cursorUsers from './cursor.js';
+import conveniaUsers from './convenia.js';
+import lucidUsers from './lucid-chart.js';
 
 import writeCSV from "./report.js";
 import { diffSets } from "./diff.js";
@@ -43,9 +45,7 @@ import { openaiAdapter } from './playwright/openai.js';
 import { snykAdapter } from './playwright/snyk.js';
 import { supabaseAdapter } from './playwright/supabase.js';
 import { resendAdapter } from './playwright/resend.js';
-import { google } from 'googleapis';
-import cursorUsers from './cursor.js';
-
+import { figmaAdapter } from './playwright/figma.js';
 const agent = new https.Agent({
   rejectUnauthorized: false
 });
@@ -77,7 +77,9 @@ const FETCHERS = {
   chatgpt: chatgptUsers,
   googleWorkspace: googleAdmins,
   vexpense: vexpensesUsers,
-  cursor: cursorUsers
+  cursor: cursorUsers,
+  convenia: conveniaUsers,
+  lucid: lucidUsers,
 };
 
 /* ============================
@@ -222,7 +224,7 @@ for (const app of Object.keys(App)) {
   }
 
   if (cfg.evidenceOnly) {
-    const adapterMap = { caniphish: caniphishAdapter, csat: csatAdapter, jumpcloud: jumpcloudAdapter, resend: resendAdapter };
+    const adapterMap = { caniphish: caniphishAdapter, csat: csatAdapter, jumpcloud: jumpcloudAdapter, resend: resendAdapter, figma: figmaAdapter };
     const screenshots = await captureUserListEvidence(app, adapterMap[app]);
     await updateJiraTicket(friendlyName, [], [], screenshots); 
     continue;
