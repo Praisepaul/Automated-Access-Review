@@ -57,5 +57,3 @@ export default async function lucidUsers() {
         return new Set();
     }
 }
-
-lucidUsers(); 

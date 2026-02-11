@@ -1,6 +1,10 @@
 import { google } from "googleapis";
 
 export default {
+  controlid: {
+    keywords: ["controlid"],
+    evidenceOnly: true,
+  },
   lucid: {
     keywords: ["lucidchart"],
   },

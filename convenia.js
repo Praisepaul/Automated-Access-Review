@@ -73,5 +73,3 @@ export default async function conveniaUsers() {
         return new Set();
     }
 }
-
-conveniaUsers();
