@@ -46,6 +46,7 @@ import { snykAdapter } from './playwright/snyk.js';
 import { supabaseAdapter } from './playwright/supabase.js';
 import { resendAdapter } from './playwright/resend.js';
 import { figmaAdapter } from './playwright/figma.js';
+import {controlIdAdapter} from './playwright/controlID.js';
 const agent = new https.Agent({
   rejectUnauthorized: false
 });
@@ -224,7 +225,7 @@ for (const app of Object.keys(App)) {
   }
 
   if (cfg.evidenceOnly) {
-    const adapterMap = { caniphish: caniphishAdapter, csat: csatAdapter, jumpcloud: jumpcloudAdapter, resend: resendAdapter, figma: figmaAdapter };
+    const adapterMap = { caniphish: caniphishAdapter, csat: csatAdapter, jumpcloud: jumpcloudAdapter, resend: resendAdapter, figma: figmaAdapter, controlid: controlIdAdapter };
     const screenshots = await captureUserListEvidence(app, adapterMap[app]);
     await updateJiraTicket(friendlyName, [], [], screenshots); 
     continue;
