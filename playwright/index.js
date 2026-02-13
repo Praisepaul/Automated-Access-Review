@@ -3,63 +3,47 @@ import fs from "fs";
 import path from "path";
 import "dotenv/config";
 
+// index.js (Refactored)
+
 export async function captureUserListEvidence(app, adapter, groups = []) {
   try {
     return await _capture(app, adapter, groups);
   } catch (e) {
     console.warn(`[${app.toUpperCase()}] UI evidence failed`);
     console.warn(e.message);
-    return [];
+    // Return empty results on failure
+    return { screenshots: [], extractedUsers: new Set() };
   }
 }
 
 async function _capture(app, adapter, groups) {
   const browser = await chromium.launch({
-    headless: false, //  ====================== true for headless mode ======================
-    args: [
-      '--disable-blink-features=AutomationControlled',
-      '--disable-features=IsolateOrigins,site-per-process' ,
-      '--use-gl=desktop', // Helps with WebGL fingerprinting
-      '--window-size=1920,1080',
-      '--no-sandbox',
-      //'--headless=new'      ====================== Uncomment for headless mode ======================
-    ]
+    headless: true, // Set to true for production
+    args: ['--disable-blink-features=AutomationControlled', '--no-sandbox']
   });
 
-  const context = await browser.newContext({
-    viewport: { width: 1400, height: 1000 },
-    deviceScaleFactor: 1,
-  });
-
-  // --- SELECTIVE STEALTH ---
-  // We only hide the 'webdriver' property for Cloudflare.
-  // This prevents JumpCloud from getting confused by fingerprint changes.
-  if (app.toLowerCase() === "cloudflare") {
-    console.log("[CLOUDFLARE] Applying lightweight stealth...");
-    await context.addInitScript(() => {
-      // Deletes the 'webdriver' property so Cloudflare doesn't see it
-      Object.defineProperty(navigator, 'webdriver', { get: () => false });
-    });
-  }
-const page = await context.newPage();
-  let capturedPaths = [];
+  const context = await browser.newContext({ viewport: { width: 1400, height: 1000 } });
+  const page = await context.newPage();
+  
+  let result = { screenshots: [], extractedUsers: new Set() };
 
   try {
     await adapter.login(page);
     await page.waitForLoadState('load', { timeout: 60000 });
 
     if (app === "oci") {
+      // OCI logic remains specific to groups
       for (const g of groups) {
-        // Capture and collect path
         const p = await captureOciGroup(page, adapter, g, app);
-        capturedPaths.push(p);
+        result.screenshots.push(p);
       }
     } else {
-      // Capture and collect path
-      const p = await captureGenericTable(app, page, adapter);
-      capturedPaths.push(p);
+      // GENERIC CAPTURE: Now handles screenshot + data extraction
+      const { file, users } = await captureGenericTable(app, page, adapter);
+      result.screenshots.push(file);
+      result.extractedUsers = users;
     }
-    return capturedPaths; // Return the list of files to main.js
+    return result; 
 
   } finally {
     await browser.close();
@@ -69,22 +53,22 @@ const page = await context.newPage();
 async function captureGenericTable(app, page, adapter) {
   const dir = path.join(process.cwd(), "evidence", app);
   fs.mkdirSync(dir, { recursive: true });
+  
   await adapter.gotoUsers(page);
+  
+  // Wait for the selector defined in the adapter (e.g., caniphishAdapter.selector)
   await page.waitForSelector(adapter.selector, { timeout: 60000 });
   await page.waitForTimeout(3000);
 
+  // --- DATA EXTRACTION STEP ---
+  let users = new Set();
+  if (typeof adapter.extractUsers === 'function') {
+      users = await adapter.extractUsers(page);
+      console.log(`[${app.toUpperCase()}] Scraped Users:`, Array.from(users));
+  }
+
   const file = path.join(dir, `users.png`);
   await page.screenshot({ path: file, fullPage: false });
-  return file; // Return path
-}
-
-async function captureOciGroup(page, adapter, group, app) {
- const dir = path.join(process.cwd(), "evidence", app, group.name);
-  fs.mkdirSync(dir, { recursive: true });
-  await adapter.gotoGroupUsers(page, group.groupId, group.name);
-  await page.waitForTimeout(2000);
-
-  const file = path.join(dir, "users.png");
-  await page.screenshot({ path: file, fullPage: false });
-  return file; // Return path
+  
+  return { file, users }; 
 }

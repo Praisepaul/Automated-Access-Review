@@ -92,5 +92,29 @@ export const figmaAdapter = {
         // 3. Final stabilization wait
         await page.waitForTimeout(3000);
         console.log("[FIGMA] Viewport expanded and list stabilized.");
-    }
+    },
+    /**
+     * Scrapes user emails from the Figma Admin Console table
+     * @returns {Promise<Set<string>>}
+     */
+    async extractUsers(page) {
+    console.log("[FIGMA] Extracting user list from UI...");
+    
+    const emails = await page.$$eval('[data-testid="multi-select-list-table-trackable-row"]', (rows) => {
+        return rows.map(row => {
+            // Find all spans/divs and find the one that is a pure email address
+            const elements = Array.from(row.querySelectorAll('span, div, p'));
+            const emailEl = elements.find(el => {
+                const text = el.innerText.trim();
+                // Regex for a clean email without spaces or newlines
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text);
+            });
+            return emailEl ? emailEl.innerText.trim().toLowerCase() : null;
+        }).filter(e => e !== null);
+    });
+
+    const userSet = new Set(emails);
+    console.log(`[FIGMA] Successfully scraped ${userSet.size} users.`);
+    return userSet;
+}
 };

@@ -10,6 +10,7 @@ export default async function githubUsers() {
     "LeandroEFCarijo": "leandro.carrijo@neospace.ai",
     "marcodourado-ctrl": "marco.dourado@neospace.ai",
     "neospace-ansible": "ansible@neospace.ai", 
+    "gustavoguimaraesspacer": "gustavo.guimaraes@neospace.ai",
 };
     console.log("[GITHUB API] Fetching members and attempting to resolve emails...");
     const emailMap = new Set();

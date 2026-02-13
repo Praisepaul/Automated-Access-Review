@@ -92,5 +92,3 @@ export default async function mongodbUsers() {
         return new Set();
     }
 }
-
-mongodbUsers();

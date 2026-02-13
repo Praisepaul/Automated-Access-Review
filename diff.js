@@ -5,6 +5,20 @@ function correlateEmail(email) {
         .trim()
         .replace("@finspace.ai", "@neospace.ai"); // Correlation logic
 }
+
+function isSystemAccount(email) {
+    const systemKeywords = [
+        'sys_', 
+        'ansible', 
+        'terraform', 
+        'automation', 
+        'bot@', 
+        'serviceaccount',
+        'access_review'
+    ];
+    return systemKeywords.some(keyword => email.toLowerCase().includes(keyword));
+}
+
 function normalize(input) {
   const map = new Map();
   if (!input) return map;
@@ -21,6 +35,9 @@ function normalize(input) {
 
     if (rawEmail) {
             const normalizedEmail = correlateEmail(rawEmail);
+            if (isSystemAccount(normalizedEmail)) {
+            return;
+        }
             map.set(normalizedEmail, originalValue);
         }
   };

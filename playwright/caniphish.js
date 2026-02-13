@@ -20,15 +20,15 @@ export const caniphishAdapter = {
 
     // 1. SSO Modal
     console.log("[CANIPHISH] Opening SSO Modal...");
-    await page.waitForSelector('#ssoButton', { state: 'visible' });
+    await page.waitForSelector('#ssoButton', { state: 'attached' });
     await page.click('#ssoButton');
 
     // 2. Identification Modal
     console.log("[CANIPHISH] Entering email for identification...");
-    await page.waitForSelector('#ssoSigninEmail', { state: 'visible' });
+    await page.waitForSelector('#ssoSigninEmail', { state: 'attached' });
     // Use fill for the identification modal
     await page.type('#ssoSigninEmail', process.env.JUMPCLOUD_EMAIL, { delay: 100 });
-    await page.click('#ssoSigninButton');
+    await page.click('#ssoSigninButton', { force: true });
 
     // --- JumpCloud Workflow ---
     console.log("[CANIPHISH] Redirected to JumpCloud. Entering credentials...");
@@ -94,9 +94,29 @@ export const caniphishAdapter = {
 
   async gotoUsers(page) {
     console.log("[CANIPHISH] Navigating to Tenant settings...");
-    await page.goto(this.dashboardUrl, { waitUntil: "domcontentloaded" });
-    // Allow for SPA data fetching
-    await page.waitForTimeout(8000);
+    await page.goto(this.dashboardUrl, { waitUntil: "networkidle" });
+    // Allow for SPA data fetching and table rendering
+    await page.waitForSelector('table', { timeout: 15000 });
+    await page.waitForTimeout(5000); 
+  },
+
+  /**
+   * Scrapes the user list directly from the table in the UI
+   * @returns {Promise<Set<string>>}
+   */
+  async extractUsers(page) {
+    console.log("[CANIPHISH] Scraping user list from UI...");
+    
+    // Scrape email addresses from the table rows
+    const emails = await page.$$eval('table tbody tr', (rows) => {
+      return rows.map(row => {
+        // Adjust child index (e.g., :nth-child(2)) based on the actual table column
+        const emailCell = row.querySelector('td:nth-child(2)'); 
+        return emailCell ? emailCell.innerText.trim().toLowerCase() : null;
+      }).filter(e => e && e.includes('@'));
+    });
+
+    return new Set(emails);
   },
 
   async loggedInCheck(page) {

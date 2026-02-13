@@ -36,7 +36,7 @@ export const githubAdapter = {
 
         await page.fill('input[name="login"]', process.env.GITHUB_ADMIN_EMAIL);
         await page.fill('input[name="password"]', process.env.GITHUB_ADMIN_PASSWORD);
-        await page.click(',');
+        await page.click('input[type="submit"]');
 
         // 1. Improved Menu Click
         console.log("[GITHUB] Waiting for 2FA screen...");

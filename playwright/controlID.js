@@ -95,5 +95,28 @@ export const controlIdAdapter = {
         console.log(`[CONTROLID] Screenshot saved to: ${screenshotPath}`);
         
         return screenshotPath;
+    },
+    /**
+     * Scrapes the operator emails from the UI table for comparison
+     * @returns {Promise<Set<string>>}
+     */
+    async extractUsers(page) {
+        console.log("[CONTROLID] Extracting users from Operadores table...");
+        
+        // Wait for the rows to be present in the DOM
+        await page.waitForSelector(this.selector, { timeout: 10000 });
+
+        const emails = await page.$$eval(this.selector, (rows) => {
+            return rows.map(row => {
+                // In IDSecure, emails are typically in the 2nd or 3rd column
+                // Adjust nth-child(2) if your specific table layout differs
+                const emailCell = row.querySelector('td:nth-child(2)'); 
+                return emailCell ? emailCell.innerText.trim().toLowerCase() : null;
+            }).filter(e => e && e.includes('@'));
+        });
+
+        const userSet = new Set(emails);
+        console.log(`[CONTROLID] Scraped ${userSet.size} operators from UI.`);
+        return userSet;
     }
 };

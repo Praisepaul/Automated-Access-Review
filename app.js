@@ -1,19 +1,26 @@
-import { google } from "googleapis";
-
 export default {
+  resend: {
+    keywords: ["resend"],
+    evidenceOnly: true
+  },
+  jumpcloud: {
+    keywords: ["jumpcloud admin", "jc admin"],
+    evidenceOnly: true
+  },
+  figma: {
+    keywords: ["figma"],
+    evidenceOnly: true
+  },
+   /*caniphish: {
+    keywords: ["caniphish"],
+    evidenceOnly: true
+  }, */
   controlid: {
     keywords: ["controlid"],
     evidenceOnly: true,
   },
   lucid: {
     keywords: ["lucidchart"],
-  },
-  figma: {
-    keywords: ["figma"],
-    evidenceOnly: true
-  },
-  convenia: {
-    keywords: ["convenia"],
   },
   cursor: {
     keywords: ["cursor"],
@@ -39,10 +46,6 @@ export default {
   confluence: {
     keywords: ["confluence admin"]
   },
-  resend: {
-    keywords: ["resend"],
-    evidenceOnly: true
-  },
   supabase: {
     keywords: ["supabase"]
   },
@@ -67,23 +70,14 @@ export default {
   netskope: {
     keywords: ["netskope"],
   },
-  jumpcloud: {
-    keywords: ["jumpcloud admin", "jc admin"],
-    evidenceOnly: true
-  },
   github: {
     keywords: ["github group offline"]
   },
   slack: {
     keywords: ["slack"]
   },
-
   crowdstrike: {
     keywords: ["crowdstrike", "falcon"]
-  },
-  caniphish: {
-    keywords: ["caniphish"],
-    evidenceOnly: true
   },
   csat: {
     keywords: ["csat", "cis"],
