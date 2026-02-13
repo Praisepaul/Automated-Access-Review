@@ -24,7 +24,8 @@ import chatgptUsers from './chatgpt.js';
 import googleAdmins from './googleWorkspace.js';
 import vexpensesUsers from './vexpense.js';
 import cursorUsers from './cursor.js';
-import conveniaUsers from './convenia.js';
+import mongodbUsers from './mongodb.js';
+//import conveniaUsers from './convenia.js';
 import lucidUsers from './lucid-chart.js';
 
 import writeCSV from "./report.js";
@@ -32,15 +33,15 @@ import { diffSets } from "./diff.js";
 import { updateJiraTicket, createAccessTicket, getJiraTicketStatus } from './jira_ticket.js';
 
 import { captureUserListEvidence } from "./playwright/index.js";
-import { ociAdapter } from './playwright/oci.js';
+//import { ociAdapter } from './playwright/oci.js';
 import { slackAdapter } from "./playwright/slack.js";
 import { crowdstrikeAdapter } from "./playwright/crowdstrike.js";
-import { caniphishAdapter } from "./playwright/caniphish.js";
+//import { caniphishAdapter } from "./playwright/caniphish.js";
 import { csatAdapter } from "./playwright/csat.js";
 //import { cloudflareAdapter } from "./playwright/cloudflare.js";
 import { jumpcloudAdapter } from './playwright/jumpcloud.js';
 import { githubAdapter } from './playwright/github.js';
-import { netskopeAdapter } from './playwright/netskope.js';
+//import { netskopeAdapter } from './playwright/netskope.js';
 import { openaiAdapter } from './playwright/openai.js';
 import { snykAdapter } from './playwright/snyk.js';
 import { supabaseAdapter } from './playwright/supabase.js';
@@ -52,7 +53,7 @@ const agent = new https.Agent({
 });
 
 // Auto mode: if true, skips confirmation prompts
-const AUTO_MODE = false;
+const AUTO_MODE = true;
 
 if (!process.env.NODE_EXTRA_CA_CERTS) {
   throw new Error('Missing trusted CA configuration');
@@ -79,8 +80,8 @@ const FETCHERS = {
   googleWorkspace: googleAdmins,
   vexpense: vexpensesUsers,
   cursor: cursorUsers,
-  convenia: conveniaUsers,
   lucid: lucidUsers,
+  mongodb: mongodbUsers
 };
 
 /* ============================
@@ -193,8 +194,8 @@ for (const app of Object.keys(App)) {
     }
 
     const ociUiGroups = Object.entries(ociResults).map(([name, v]) => ({ name, groupId: v.groupId }));
-    const screenshotPaths = await captureUserListEvidence("oci", ociAdapter, ociUiGroups);
-    evidenceFiles.push(...screenshotPaths);
+    //const screenshotPaths = await captureUserListEvidence("oci", ociAdapter, ociUiGroups);
+    //evidenceFiles.push(...screenshotPaths);
 
     await updateJiraTicket("OCI", unauthorizedEmails, missingEmails, evidenceFiles);
     
@@ -225,11 +226,69 @@ for (const app of Object.keys(App)) {
   }
 
   if (cfg.evidenceOnly) {
-    const adapterMap = { caniphish: caniphishAdapter, csat: csatAdapter, jumpcloud: jumpcloudAdapter, resend: resendAdapter, figma: figmaAdapter, controlid: controlIdAdapter };
-    const screenshots = await captureUserListEvidence(app, adapterMap[app]);
-    await updateJiraTicket(friendlyName, [], [], screenshots); 
+    const adapterMap = { 
+        //caniphish: caniphishAdapter, 
+        csat: csatAdapter, 
+        jumpcloud: jumpcloudAdapter, 
+        resend: resendAdapter, 
+        figma: figmaAdapter, 
+        controlid: controlIdAdapter 
+    };
+
+    // Run Playwright and get both screenshots AND data
+    const { screenshots, extractedUsers } = await captureUserListEvidence(app, adapterMap[app]);
+    
+    // If we extracted data, perform the comparison logic
+    if (extractedUsers && extractedUsers.size > 0) {
+        const { unauthorized, missing } = diffSets(expectedEmails, extractedUsers);
+
+        // --- Inside if (cfg.evidenceOnly) block ---
+if (unauthorized.length) {
+    // FIX: Map the objects to clean rows for the CSV
+    const rows = unauthorized.map(u => ({ 
+        email: typeof u === "string" ? u : u.email 
+    }));
+    
+    // Ensure you use these 'rows' for the CSV
+    const path = await writeCSV({ app, group: "unauthorized", rows: rows });
+    if (path) evidenceFiles.push(path);
+}
+
+if (missing.length) {
+    // FIX: Map for missing users too
+    const rows = missing.map(m => ({ 
+        email: typeof m === "string" ? m : m.email 
+    }));
+    
+    const path = await writeCSV({ app, group: "missing", rows: rows });
+    if (path) evidenceFiles.push(path);
+}
+        
+        // Final Jira Update with diff findings
+        await updateJiraTicket(friendlyName, unauthorized, missing, screenshots);
+    // Inside your if (cfg.evidenceOnly) block
+if (unauthorized.length > 0) {
+    console.log(`[TICKET] Raising ${unauthorized.length} individual tickets for ${friendlyName}...`);
+    for (const user of unauthorized) {
+        // Ensure email is a clean string, not an object or a newline-string
+        const emailToLookup = (typeof user === "string" ? user : user.email).split('\n')[0].trim();
+        
+        const { name, email } = await getJumpCloudUserName(emailToLookup);
+        const jcGroup = selectedGroups[0]?.name || "Jumpcloud";
+        
+        // Ensure name and friendlyName are valid before calling Jira
+        if (name && friendlyName) {
+            await createAccessTicket(name, email, jcGroup);
+        } else {
+            console.warn(`[SKIP TICKET] Missing data for ${emailToLookup}`);
+        }
+    }
+}
+    } else {
+        await updateJiraTicket(friendlyName, [], [], screenshots); 
+    }
     continue;
-  }
+}
 
   const actual = await FETCHERS[app]({ groups: selectedGroups });
   const { unauthorized, missing } = diffSets(expectedEmails, actual);
@@ -246,11 +305,15 @@ for (const app of Object.keys(App)) {
   }
 
   // Capture Screenshots
-  const adapters = { slack: slackAdapter, crowdstrike: crowdstrikeAdapter, github: githubAdapter, netskope: netskopeAdapter, snyk: snykAdapter, supabase: supabaseAdapter };
-  if (adapters[app]) {
-    const screenshots = await captureUserListEvidence(app, adapters[app]);
-    if (screenshots) evidenceFiles.push(...screenshots);
-  }
+  const adapters = { slack: slackAdapter, crowdstrike: crowdstrikeAdapter, github: githubAdapter, snyk: snykAdapter, supabase: supabaseAdapter };
+
+if (adapters[app]) {
+    const result = await captureUserListEvidence(app, adapters[app]);
+    // Fix: access the .screenshots array from the returned object
+    if (result && result.screenshots) {
+        evidenceFiles.push(...result.screenshots);
+    }
+}
 
   // Final Jira Update
   console.log(`[PROCESS] Initiating Jira update for ${friendlyName}...`);

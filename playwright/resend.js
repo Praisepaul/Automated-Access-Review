@@ -55,5 +55,27 @@ export const resendAdapter = {
         await page.evaluate(() => window.scrollBy(0, 300));
         await page.waitForTimeout(2000);
         await page.evaluate(() => window.scrollTo(0, 0));
+    },
+    /**
+     * Scrapes the member emails from the Resend settings page
+     * @returns {Promise<Set<string>>}
+     */
+    async extractUsers(page) {
+        console.log("[RESEND] Scraping user list from UI...");
+
+        const emails = await page.$$eval('p.text-sm.font-semibold', (elements) => {
+            return elements
+                .map(el => el.innerText.trim().toLowerCase())
+                .filter(text => text.includes('@'));
+        });
+
+        // Filter out the automation/system user to prevent false mismatches
+        const filteredEmails = emails.filter(email => 
+            !email.includes('sys_access_review_automation')
+        );
+
+        const userSet = new Set(filteredEmails);
+        console.log(`[RESEND] Scraped ${userSet.size} users (filtered).`);
+        return userSet;
     }
 };
