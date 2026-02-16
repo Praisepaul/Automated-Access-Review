@@ -27,6 +27,7 @@ import cursorUsers from './cursor.js';
 import mongodbUsers from './mongodb.js';
 //import conveniaUsers from './convenia.js';
 import lucidUsers from './lucid-chart.js';
+import { sendSlackSummary } from './slack_notifier.js';
 
 import writeCSV from "./report.js";
 import { diffSets } from "./diff.js";
@@ -53,11 +54,13 @@ const agent = new https.Agent({
 });
 
 // Auto mode: if true, skips confirmation prompts
-const AUTO_MODE = true;
+const AUTO_MODE = false;
 
 if (!process.env.NODE_EXTRA_CA_CERTS) {
   throw new Error('Missing trusted CA configuration');
 }
+
+const globalReport = [];
 
 /* ============================
    FETCHERS
@@ -242,6 +245,13 @@ for (const app of Object.keys(App)) {
     if (extractedUsers && extractedUsers.size > 0) {
         const { unauthorized, missing } = diffSets(expectedEmails, extractedUsers);
 
+        globalReport.push({
+                name: friendlyName,
+                missingCount: missing.length,
+                unauthorizedCount: unauthorized.length,
+                unauthorizedList: unauthorized.map(u => typeof u === "string" ? u : u.email)
+            });
+
         // --- Inside if (cfg.evidenceOnly) block ---
 if (unauthorized.length) {
     // FIX: Map the objects to clean rows for the CSV
@@ -293,6 +303,13 @@ if (unauthorized.length > 0) {
   const actual = await FETCHERS[app]({ groups: selectedGroups });
   const { unauthorized, missing } = diffSets(expectedEmails, actual);
 
+  globalReport.push({
+        name: friendlyName,
+        missingCount: missing.length,
+        unauthorizedCount: unauthorized.length,
+        unauthorizedList: unauthorized.map(u => typeof u === "string" ? u : u.email)
+    });
+
   // Write Reports
   if (unauthorized.length) {
     const path = await writeCSV({ app, group: "unauthorized", rows: unauthorized.map(u => ({ email: typeof u === "string" ? u : u.email })) });
@@ -328,4 +345,5 @@ if (adapters[app]) {
   }
 }
 
-console.log("\n Access review completed");
+console.log("\n Access review completed. Sending Slack summary...");
+await sendSlackSummary(globalReport);
