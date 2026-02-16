@@ -80,9 +80,14 @@ export const slackAdapter = {
     console.log("[SLACK] Waiting for admin UI");
     // Ensure we are on a management URL
     await page.waitForURL(
-      url => url.href.includes("/manage/") || url.href.includes("enterprise.slack.com"),
-      { timeout: 60000 }
-    );
+  url => {
+    const host = url.hostname;
+    const path = url.pathname || "";
+    const isSlackHost = host === "app.slack.com" || host === "enterprise.slack.com";
+    return isSlackHost && path.includes("/manage/");
+  },
+  { timeout: 60000 }
+);
 
     // Apply Admin Filter
     const filterBtn = '[data-qa="org_members_table_header-filter-button"]';
