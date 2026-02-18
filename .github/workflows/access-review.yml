@@ -41,9 +41,9 @@ jobs:
         run: |
           mkdir -p ~/.oci
           echo "[DEFAULT]" > ~/.oci/config
-          echo "user=${{ secrets.OCI_USER_ID }}" >> ~/.oci/config
+          echo "user=${{ secrets.OCI_USER_OCID }}" >> ~/.oci/config
           echo "fingerprint=${{ secrets.OCI_FINGERPRINT }}" >> ~/.oci/config
-          echo "tenancy=${{ secrets.OCI_TENANCY_ID }}" >> ~/.oci/config
+          echo "tenancy=${{ secrets.OCI_TENANCY_OCID }}" >> ~/.oci/config
           echo "region=${{ secrets.OCI_REGION }}" >> ~/.oci/config
           echo "key_file=~/.oci/key.pem" >> ~/.oci/config
           echo "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/key.pem
