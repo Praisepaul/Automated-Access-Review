@@ -54,7 +54,7 @@ const agent = new https.Agent({
 });
 
 // Auto mode: if true, skips confirmation prompts
-const AUTO_MODE = false;
+const AUTO_MODE = true;
 
 if (!process.env.NODE_EXTRA_CA_CERTS) {
   throw new Error('Missing trusted CA configuration');
