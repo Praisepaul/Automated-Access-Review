@@ -1,0 +1,60 @@
+name: Access Review Production Tool
+
+on:
+  schedule:
+    # 09:00 AM every Monday (Weekly Scan)
+    - cron: '0 9 * * 1'
+    # 09:00 AM on the 1st of every month (Monthly Audit)
+    - cron: '0 9 1 * *'
+    # 09:00 AM on the 30th of every month (Monthly Audit)
+    - cron: '0 9 30 * *'    
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: 'Force run regardless of Jira tickets?'
+        default: true
+        type: boolean
+
+jobs:
+  run-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60 # Safety gate to prevent infinite loops
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Install Playwright Browsers
+        # This installs Chromium and the necessary Linux system libraries
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Access Review
+        env:
+          # Automatically injects every secret you uploaded via CLI
+          # Note: If you have specific names, you can list them individually
+          # or use the env: ${{ secrets }} shortcut if supported by your runner
+          JUMPCLOUD_API_KEY: ${{ secrets.JUMPCLOUD_API_KEY }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          # Logic to set SCHEDULED_RUN: true on Mondays, false on the 1st
+          # (github.event.schedule == '0 9 * * 1' means it is a Monday run)
+          SCHEDULED_RUN: ${{ github.event.schedule == '0 9 * * 1' || github.event.inputs.force_run == 'true' }}
+        run: node main.js
+
+      - name: Upload Evidence Artifacts
+        # This stores screenshots and CSVs in GitHub storage for 90 days
+        uses: actions/upload-artifact@v4
+        if: always() # Ensures artifacts are saved even if the script fails
+        with:
+          name: audit-evidence-${{ github.run_id }}
+          path: evidence/
+          retention-days: 90
