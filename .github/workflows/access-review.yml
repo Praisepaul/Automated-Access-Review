@@ -37,6 +37,12 @@ jobs:
         # This installs Chromium and the necessary Linux system libraries
         run: npx playwright install --with-deps chromium
 
+      - name: Setup CA Certificate
+        run: |
+          echo "${{ secrets.NODE_EXTRA_CA_CERTS_VALUE }}" > ./trusted-ca.crt
+          # This sets the env var for the rest of the workflow steps
+          echo "NODE_EXTRA_CA_CERTS=$(pwd)/trusted-ca.crt" >> $GITHUB_ENV
+
       - name: Setup OCI Config
         run: |
           mkdir -p ~/.oci
