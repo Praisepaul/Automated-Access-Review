@@ -2,7 +2,6 @@ import "dotenv/config";
 import { generateSync } from 'otplib';
 
 export const ociAdapter = {
-  userDataDir: "./.oci-profile",
   headless: false,
   // OCI table rows often use this class
   selector: '.oj-table-body-row, [role="row"], table',

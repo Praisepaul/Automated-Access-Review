@@ -9,10 +9,17 @@ export default async function ociUsers({ groups }) {
     return {};
   }
 
-  const privateKey = fs.readFileSync(
-    process.env.OCI_PRIVATE_KEY_PATH,
-    "utf8"
-  );
+  let privateKey;
+  if (process.env.OCI_PRIVATE_KEY_CONTENTS) {
+    // Use direct string (GitHub Actions / Production)
+    privateKey = process.env.OCI_PRIVATE_KEY_CONTENTS;
+  } else if (process.env.OCI_PRIVATE_KEY_PATH) {
+    // Use file path (Local Development)
+    privateKey = fs.readFileSync(process.env.OCI_PRIVATE_KEY_PATH, "utf8");
+  } else {
+    throw new Error("OCI Private Key not found. Provide OCI_PRIVATE_KEY_CONTENTS or OCI_PRIVATE_KEY_PATH.");
+  }
+  // ----------------------------------
 
   const provider = new common.SimpleAuthenticationDetailsProvider(
     process.env.OCI_TENANCY_OCID,
@@ -20,7 +27,7 @@ export default async function ociUsers({ groups }) {
     process.env.OCI_FINGERPRINT,
     privateKey,
     null,
-    null
+    process.env.OCI_REGION // Good practice to pass region here too
   );
 
   const client = new identity.IdentityClient({
