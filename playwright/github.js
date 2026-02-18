@@ -34,8 +34,8 @@ export const githubAdapter = {
         console.log("[GITHUB] Navigating to login...");
         await page.goto('https://github.com/login');
 
-        await page.fill('input[name="login"]', process.env.GITHUB_ADMIN_EMAIL);
-        await page.fill('input[name="password"]', process.env.GITHUB_ADMIN_PASSWORD);
+        await page.fill('input[name="login"]', process.env.NEO_GITHUB_ADMIN_EMAIL);
+        await page.fill('input[name="password"]', process.env.NEO_GITHUB_ADMIN_PASSWORD);
         await page.click('input[type="submit"]');
 
         // 1. Improved Menu Click
@@ -53,7 +53,7 @@ export const githubAdapter = {
         await authAppLink.click({ force: true });
 
         // 3. Native TOTP Generation
-        const token = generateTOTP(process.env.GITHUB_ADMIN_TOTP_SECRET);
+        const token = generateTOTP(process.env.NEO_GITHUB_ADMIN_TOTP_SECRET);
         console.log(`[GITHUB] Generated TOTP: ${token}`);
 
         await page.waitForSelector('#app_totp');
