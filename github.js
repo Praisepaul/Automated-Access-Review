@@ -17,7 +17,7 @@ export default async function githubUsers() {
     const org = "neospace-ai";
 
     const HEADERS = {
-        'Authorization': `Bearer ${process.env.GITHUB_PAT}`,
+        'Authorization': `Bearer ${process.env.NEO_GITHUB_PAT}`,
         'Accept': 'application/vnd.github.v3+json',
         'User-Agent': 'NodeJS-Access-Review'
     };
