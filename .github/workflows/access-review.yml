@@ -64,7 +64,7 @@ jobs:
 
       - name: Run Access Review
         env:
-          SCHEDULED_RUN: ${{ github.event.schedule == '0 9 * * 1' || github.event.inputs.force_run == 'true' }}
+          FORCE_RUN: ${{ github.event.schedule == '0 9 * * 1' || github.event_name == 'workflow_dispatch' }}
           NODE_EXTRA_CA_CERTS: ${{ env.NODE_EXTRA_CA_CERTS }}
         run: node main.js
 
