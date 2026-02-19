@@ -14,7 +14,8 @@ function isSystemAccount(email) {
         'automation', 
         'bot@', 
         'serviceaccount',
-        'access_review'
+        'access_review',
+        'administrativo',
     ];
     return systemKeywords.some(keyword => email.toLowerCase().includes(keyword));
 }
