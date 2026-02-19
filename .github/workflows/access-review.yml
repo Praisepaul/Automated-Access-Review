@@ -55,93 +55,17 @@ jobs:
           echo "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/key.pem
           chmod 600 ~/.oci/config ~/.oci/key.pem
 
+      - name: Create .env file from Secrets
+        shell: bash
+        run: |
+          # This iterates through all secrets and writes them to .env
+          # We use jq to handle the JSON object of secrets
+          echo '${{ toJSON(secrets) }}' | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' > .env       
+
       - name: Run Access Review
         env:
-          # Automatically injects every secret you uploaded via CLI
-          # Note: If you have specific names, you can list them individually
-          # or use the env: ${{ secrets }} shortcut if supported by your runner
-          env:
-          # GLOBAL & TOOL CONFIG
-          SCHEDULED_RUN: ${{ github.event.schedule == '0 9 * * 1' || github.event.inputs.force_run == 'true' }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          NODE_EXTRA_CA_CERTS: ${{ env.NODE_EXTRA_CA_CERTS }} # Path set by the Setup CA step
-
-          # JIRA
-          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-          JIRA_TEAM_NAME: ${{ secrets.JIRA_TEAM_NAME }}
-          JIRA_ADMIN_GROUP_ID: ${{ secrets.JIRA_ADMIN_GROUP_ID }}
-
-          # JUMPCLOUD
-          JUMPCLOUD_API_KEY: ${{ secrets.JUMPCLOUD_API_KEY }}
-          JUMPCLOUD_EMAIL: ${{ secrets.JUMPCLOUD_EMAIL }}
-          JUMPCLOUD_PASSWORD: ${{ secrets.JUMPCLOUD_PASSWORD }}
-          JUMPCLOUD_ORG_ID: ${{ secrets.JUMPCLOUD_ORG_ID }}
-          JUMPCLOUD_MFA_SECRET: ${{ secrets.JUMPCLOUD_MFA_SECRET }}
-          JUMPCLOUD_ADMIN_EMAIL: ${{ secrets.JUMPCLOUD_ADMIN_EMAIL }}
-          JUMPCLOUD_ADMIN_PASSWORD: ${{ secrets.JUMPCLOUD_ADMIN_PASSWORD }}
-          JUMPCLOUD_ADMIN_TOTP_SECRET: ${{ secrets.JUMPCLOUD_ADMIN_TOTP_SECRET }}
-
-          # OCI (API & UI)
-          OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
-          OCI_USER_OCID: ${{ secrets.OCI_USER_OCID }}
-          OCI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
-          OCI_REGION: ${{ secrets.OCI_REGION }}
-          OCI_DOMAIN_OCID: ${{ secrets.OCI_DOMAIN_OCID }}
-          OCI_EMAIL: ${{ secrets.OCI_EMAIL }}
-          OCI_PASSWORD: ${{ secrets.OCI_PASSWORD }}
-          OCI_MFA_SECRET: ${{ secrets.OCI_MFA_SECRET }}
-          OCI_PRIVATE_KEY_CONTENTS: ${{ secrets.OCI_PRIVATE_KEY }}
-
-          # FIGMA
-          FIGMA_EMAIL: ${{ secrets.FIGMA_EMAIL }}
-          FIGMA_PASSWORD: ${{ secrets.FIGMA_PASSWORD }}
-
-          # GITHUB
-          NEO_GITHUB_PAT: ${{ secrets.NEO_GITHUB_PAT }}
-          NEO_GITHUB_ADMIN_EMAIL: ${{ secrets.NEO_GITHUB_ADMIN_EMAIL }}
-          NEO_GITHUB_ADMIN_PASSWORD: ${{ secrets.NEO_GITHUB_ADMIN_PASSWORD }}
-          NEO_GITHUB_ADMIN_TOTP_SECRET: ${{ secrets.NEO_GITHUB_ADMIN_TOTP_SECRET }}
-
-          # MONGODB (Atlas)
-          CLIENT_ID: ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-          ORG_ID: ${{ secrets.ORG_ID }}
-
-          # CLOUDFLARE
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL }}
-          CLOUDFLARE_PASSWORD: ${{ secrets.CLOUDFLARE_PASSWORD }}
-          CLOUDFLARE_MFA_SECRET: ${{ secrets.CLOUDFLARE_MFA_SECRET }}
-
-          # RESEND
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          RESEND_EMAIL: ${{ secrets.RESEND_EMAIL }}
-          RESEND_PASSWORD: ${{ secrets.RESEND_PASSWORD }}
-
-          # SLACK
-          SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
-          SLACK_ENTERPRISE_ID: ${{ secrets.SLACK_ENTERPRISE_ID }}
-
-          # OTHER APPS
-          NETSKOPE_API_TOKEN: ${{ secrets.NETSKOPE_API_TOKEN }}
-          OPENAI_ADMIN_KEY: ${{ secrets.OPENAI_ADMIN_KEY }}
-          PROJECT_ID: ${{ secrets.PROJECT_ID }}
-          SNYK_API_TOKEN: ${{ secrets.SNYK_API_TOKEN }}
-          VEXPENSES_API_KEY: ${{ secrets.VEXPENSES_API_KEY }}
-          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-          LUCID_API_TOKEN: ${{ secrets.LUCID_API_TOKEN }}
-          SUPABASE_API_TOKEN: ${{ secrets.SUPABASE_API_TOKEN }}
-          SUPABASE_ORG_ID: ${{ secrets.SUPABASE_ORG_ID }}
-          SUPABASE_EMAIL: ${{ secrets.SUPABASE_EMAIL }}
-          SUPABASE_PASSWORD: ${{ secrets.SUPABASE_PASSWORD }}
-          CONTROLID_USER: ${{ secrets.CONTROLID_USER }}
-          CONTROLID_PASSWORD: ${{ secrets.CONTROLID_PASSWORD }}
-          CONVENIA_TOKEN: ${{ secrets.CONVENIA_TOKEN }}
-          CS_CLIENT_ID: ${{ secrets.CS_CLIENT_ID }}
-          CS_CLIENT_SECRET: ${{ secrets.CS_CLIENT_SECRET }}
-          CS_BASE_URL: ${{ secrets.CS_BASE_URL }}
+          FORCE_RUN: ${{ github.event.schedule == '0 9 * * 1' || github.event_name == 'workflow_dispatch' }}
+          NODE_EXTRA_CA_CERTS: ${{ env.NODE_EXTRA_CA_CERTS }}
         run: node main.js
 
       - name: Upload Evidence Artifacts

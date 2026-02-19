@@ -55,10 +55,22 @@ const agent = new https.Agent({
 
 // Auto mode: if true, skips confirmation prompts
 const AUTO_MODE = true;
+const FORCE_RUN = process.env.FORCE_RUN === 'true';
 
 if (!process.env.NODE_EXTRA_CA_CERTS) {
   throw new Error('Missing trusted CA configuration');
 }
+
+// Example validation in main.js
+function validateEnv() {
+    const required = ['JUMPCLOUD_API_KEY', 'SLACK_WEBHOOK_URL', 'JIRA_API_TOKEN'];
+    const missing = required.filter(k => !process.env[k]);
+    if (missing.length > 0) {
+        throw new Error(`CRITICAL: Missing required environment variables: ${missing.join(', ')}`);
+    }
+}
+
+validateEnv();
 
 const globalReport = [];
 
@@ -112,9 +124,13 @@ for (const app of Object.keys(App)) {
   // This gates the entire app process (Prompts, Fetching, and Playwright)
   const currentTicketStatus = await getJiraTicketStatus(friendlyName);
   
+  if (!FORCE_RUN) {
   if (currentTicketStatus === "IN PROGRESS" || currentTicketStatus === "CLOSED") {
     console.log(`[SKIP] ${friendlyName} is already ${currentTicketStatus}. Skipping process.`);
     continue;
+  }
+  } else {
+    console.log(`[FORCE RUN] Ignoring current Jira status: ${currentTicketStatus}`);
   }
 
   /* 3. CONFIRMATION / AUTO_MODE */
@@ -200,8 +216,9 @@ for (const app of Object.keys(App)) {
     //const screenshotPaths = await captureUserListEvidence("oci", ociAdapter, ociUiGroups);
     //evidenceFiles.push(...screenshotPaths);
 
-    await updateJiraTicket("OCI", unauthorizedEmails, missingEmails, evidenceFiles);
-    
+if (!FORCE_RUN) {
+        await updateJiraTicket("OCI", unauthorizedEmails, missingEmails, evidenceFiles);
+    }    
     if (unauthorizedEmails.length > 0) {
       for (const entry of unauthorizedEmails) {
         const emailOnly = entry.split(' ')[0]; 
@@ -215,9 +232,11 @@ for (const app of Object.keys(App)) {
 
   // Handle simple evidence-only bypass apps
   if (["censys", "exato", "framer", "adopt", "grafana"].includes(app)) {
-    await updateJiraTicket(friendlyName, [], [], []);
+    if (!FORCE_RUN) {
+        await updateJiraTicket(friendlyName, [], [], []);
+    }
     continue;
-  }
+}
 
   /* ============================
      OTHER APPS (Slack, Snyk, etc.)
@@ -273,9 +292,11 @@ if (missing.length) {
     const path = await writeCSV({ app, group: "missing", rows: rows });
     if (path) evidenceFiles.push(path);
 }
-        
-        // Final Jira Update with diff findings
-        await updateJiraTicket(friendlyName, unauthorized, missing, screenshots);
+        if (!FORCE_RUN) {
+            await updateJiraTicket(friendlyName, unauthorized, missing, screenshots);
+        } else {
+            console.log(`[WEEKLY] Skipping parent ticket update for ${friendlyName}`);
+        }
     // Inside your if (cfg.evidenceOnly) block
 if (unauthorized.length > 0) {
     console.log(`[TICKET] Raising ${unauthorized.length} individual tickets for ${friendlyName}...`);
@@ -295,8 +316,9 @@ if (unauthorized.length > 0) {
     }
 }
     } else {
-        await updateJiraTicket(friendlyName, [], [], screenshots); 
-    }
+if (!FORCE_RUN) {
+            await updateJiraTicket(friendlyName, [], [], screenshots);
+        }    }
     continue;
 }
 
@@ -332,9 +354,12 @@ if (adapters[app]) {
     }
 }
 
-  // Final Jira Update
-  console.log(`[PROCESS] Initiating Jira update for ${friendlyName}...`);
-  await updateJiraTicket(friendlyName, unauthorized, missing, evidenceFiles);
+  if (!FORCE_RUN) {
+    console.log(`[COMPLIANCE] Monthly mode: Updating parent audit ticket for ${friendlyName}...`);
+    await updateJiraTicket(friendlyName, unauthorized, missing, evidenceFiles);
+} else {
+    console.log(`[WEEKLY/MANUAL] Skipping ticket updates/attachments.`);
+}
 
   if (unauthorized.length > 0) {
     for (const user of unauthorized) {
