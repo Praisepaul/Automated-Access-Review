@@ -19,7 +19,12 @@ export async function captureUserListEvidence(app, adapter, groups = []) {
 async function _capture(app, adapter, groups) {
   const browser = await chromium.launch({
     headless: true, // Set to true for production
-    args: ['--disable-blink-features=AutomationControlled', '--no-sandbox']
+    args: [
+      '--disable-blink-features=AutomationControlled', 
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--headless=new'
+    ]
   });
 
   const context = await browser.newContext({ viewport: { width: 1400, height: 1000 } });

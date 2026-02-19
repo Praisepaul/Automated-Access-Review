@@ -3,7 +3,6 @@ import { generateSync } from 'otplib';
 
 export const slackAdapter = {
   userDataDir: "playwright/profiles/slack",
-  headless: false,
   name: "SLACK",
   dashboardUrl: "https://app.slack.com/manage/E08D7Q2A73R/people",
   

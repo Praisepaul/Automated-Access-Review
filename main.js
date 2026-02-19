@@ -60,6 +60,17 @@ if (!process.env.NODE_EXTRA_CA_CERTS) {
   throw new Error('Missing trusted CA configuration');
 }
 
+// Example validation in main.js
+function validateEnv() {
+    const required = ['JUMPCLOUD_API_KEY', 'SLACK_WEBHOOK_URL', 'JIRA_API_TOKEN'];
+    const missing = required.filter(k => !process.env[k]);
+    if (missing.length > 0) {
+        throw new Error(`CRITICAL: Missing required environment variables: ${missing.join(', ')}`);
+    }
+}
+
+validateEnv();
+
 const globalReport = [];
 
 /* ============================
