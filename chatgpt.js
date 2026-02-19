@@ -8,7 +8,7 @@ dotenv.config({ override: true });
 export default async function chatgptUsers() {
     const users = new Set();
     const API_KEY = process.env.OPENAI_ADMIN_KEY;
-    const PROJECT_ID = process.env.PROJECT_ID;
+    const PROJECT_ID = process.env.OPENAI_PROJECT_ID;
 
     if (!API_KEY || !PROJECT_ID) {
         console.warn("[OPENAI API] Missing OPENAI_ADMIN_KEY or PROJECT_ID in environment");
