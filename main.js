@@ -54,7 +54,7 @@ const agent = new https.Agent({
 });
 
 // Auto mode: if true, skips confirmation prompts
-const AUTO_MODE = false;
+const AUTO_MODE = process.env.GITHUB_ACTIONS === 'true';
 const FORCE_RUN = process.env.FORCE_RUN === 'true';
 
 if (!process.env.NODE_EXTRA_CA_CERTS) {
