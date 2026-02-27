@@ -461,6 +461,6 @@ node main.js
 
 ## Author
 
-**Praise Paul**
+**Praise Paul **
 
 Security Automation & Offensive Engineering
