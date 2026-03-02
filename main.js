@@ -35,13 +35,13 @@ import { updateJiraTicket, createAccessTicket, getJiraTicketStatus } from './jir
 
 import { captureUserListEvidence } from "./playwright/index.js";
 //import { ociAdapter } from './playwright/oci.js';
-import { slackAdapter } from "./playwright/slack.js";
+//import { slackAdapter } from "./playwright/slack.js";
 import { crowdstrikeAdapter } from "./playwright/crowdstrike.js";
 //import { caniphishAdapter } from "./playwright/caniphish.js";
 import { csatAdapter } from "./playwright/csat.js";
 //import { cloudflareAdapter } from "./playwright/cloudflare.js";
 import { jumpcloudAdapter } from './playwright/jumpcloud.js';
-import { githubAdapter } from './playwright/github.js';
+//import { githubAdapter } from './playwright/github.js';
 //import { netskopeAdapter } from './playwright/netskope.js';
 import { openaiAdapter } from './playwright/openai.js';
 import { snykAdapter } from './playwright/snyk.js';
@@ -344,7 +344,7 @@ if (!FORCE_RUN) {
   }
 
   // Capture Screenshots
-  const adapters = { slack: slackAdapter, crowdstrike: crowdstrikeAdapter, github: githubAdapter, snyk: snykAdapter, supabase: supabaseAdapter };
+  const adapters = { crowdstrike: crowdstrikeAdapter, snyk: snykAdapter, supabase: supabaseAdapter };
 
 if (adapters[app]) {
     const result = await captureUserListEvidence(app, adapters[app]);
